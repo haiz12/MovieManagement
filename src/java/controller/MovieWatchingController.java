@@ -1,0 +1,107 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
+ */
+package controller;
+
+import dao.CategoryDAO;
+import dao.MovieDAO;
+import dao.OrderDAO;
+import entity.Account;
+import entity.Category;
+import entity.Movie;
+import java.io.IOException;
+import java.io.PrintWriter;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import java.util.List;
+
+/**
+ *
+ * @author Admin
+ */
+@WebServlet(name = "MovieWatchingController", urlPatterns = {"/movie-watching"})
+public class MovieWatchingController extends HttpServlet {
+
+    /**
+     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
+     * methods.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        OrderDAO orderDAO = new OrderDAO();
+        HttpSession session = request.getSession();
+        Account acc = (Account) session.getAttribute("acc");
+        //if don't login -> login
+        if (acc == null) {
+            response.sendRedirect("login.jsp");
+        } else {
+            if (acc.getIsMember() == 1 && orderDAO.checkExpirationDate(acc.getId())) {
+                //if is member
+                CategoryDAO categoryDAO = new CategoryDAO();
+                List<Category> lstCategory = categoryDAO.findAll();
+                request.setAttribute("lstCategory", lstCategory);
+
+                String id = request.getParameter("id");
+                MovieDAO movieDAO = new MovieDAO();
+                Movie m = movieDAO.getMovieById(Integer.parseInt(id));
+                request.setAttribute("movie", m);
+
+                request.getRequestDispatcher("movie-watching.jsp").forward(request, response);
+            }else{
+                //if is not member -> register and payment to watching
+                request.getRequestDispatcher("member-register.jsp").forward(request, response);
+            }
+        }
+    }
+
+    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
+    /**
+     * Handles the HTTP <code>GET</code> method.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    /**
+     * Handles the HTTP <code>POST</code> method.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    /**
+     * Returns a short description of the servlet.
+     *
+     * @return a String containing servlet description
+     */
+    @Override
+    public String getServletInfo() {
+        return "Short description";
+    }// </editor-fold>
+
+}
